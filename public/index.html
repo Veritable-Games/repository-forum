@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Repository Forum</title>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Anonymous+Pro:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Anonymous Pro', Verdana, Arial, sans-serif; 
+            font-size: 12px; 
+            background: #f2f4f6; 
+            margin: 0; 
+            padding: 0; 
+            color: #333;
+        }
+        .header { 
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e4080 100%); 
+            color: white; 
+            padding: 20px; 
+            border-bottom: 3px solid #1a3660; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .header h1 { margin: 0; font-size: 24px; font-family: 'Courier Prime', monospace; font-weight: 700; }
+        .nav { 
+            background: #e6e8ea; 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #d0d2d4; 
+        }
+        .nav a { 
+            color: #2c5aa0; 
+            text-decoration: none; 
+            margin-right: 20px; 
+            font-weight: bold; 
+            font-size: 11px;
+            transition: color 0.2s ease;
+            padding: 6px 12px;
+            border-radius: 3px;
+        }
+        .nav a:hover { 
+            background: #d6d8da;
+            color: #1e4080; 
+        }
+        .container { max-width: 1024px; margin: 10px auto; }
+        .forum-section { 
+            background: white; 
+            border: 1px solid #d0d2d4; 
+            margin-bottom: 15px; 
+            border-radius: 4px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .forum-title { 
+            background: linear-gradient(135deg, #2c5aa0 0%, #245089 100%); 
+            color: white; 
+            padding: 12px 15px; 
+            font-size: 14px; 
+            font-weight: bold;
+            border-radius: 4px 4px 0 0;
+        }
+        .forum-content { padding: 10px; }
+        .topic { 
+            border-bottom: 1px solid #f0f1f2; 
+            padding: 12px 15px; 
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        .topic:hover { background: #f8f9fa; }
+        .topic:last-child { border-bottom: none; }
+        .topic-title { 
+            font-weight: bold; 
+            color: #2c5aa0; 
+            margin-bottom: 4px;
+            font-size: 13px;
+        }
+        .topic-meta { 
+            font-size: 11px; 
+            color: #666; 
+        }
+        .topic-preview { 
+            font-size: 11px; 
+            color: #555; 
+            margin-top: 6px;
+            line-height: 1.4;
+        }
+        .loading { 
+            text-align: center; 
+            padding: 20px; 
+            color: #666; 
+        }
+        .file-viewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            z-index: 1000;
+        }
+        .file-content {
+            background: white;
+            border: 2px solid #2c5aa0;
+            margin: 50px auto;
+            padding: 20px;
+            width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            border-radius: 8px;
+            color: #333;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        .close-btn {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+        .close-btn:hover {
+            color: #2c5aa0;
+        }
+        pre {
+            font-family: 'Anonymous Pro', monospace;
+            line-height: 1.4;
+            white-space: pre-wrap;
+        }
+        .editor-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            z-index: 1001;
+        }
+        .editor-window {
+            background: white;
+            border: 2px solid #2c5aa0;
+            margin: 30px auto;
+            padding: 0;
+            width: 90%;
+            max-width: 1200px;
+            height: 85%;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-header {
+            background: linear-gradient(135deg, #2c5aa0 0%, #1e4080 100%);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px 6px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .editor-toolbar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #d0d2d4;
+            padding: 8px 15px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .editor-toolbar button {
+            background: #fff;
+            border: 1px solid #d0d2d4;
+            padding: 6px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s ease;
+        }
+        .editor-toolbar button:hover {
+            background: #e9ecef;
+            border-color: #2c5aa0;
+        }
+        .editor-toolbar .separator {
+            width: 1px;
+            height: 20px;
+            background: #d0d2d4;
+            margin: 0 5px;
+        }
+        .editor-body {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .editor-sidebar {
+            width: 250px;
+            border-right: 1px solid #d0d2d4;
+            background: #f8f9fa;
+            overflow-y: auto;
+        }
+        .editor-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .editor-input {
+            flex: 1;
+            border: none;
+            padding: 20px;
+            font-family: 'Anonymous Pro', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+        }
+        .editor-preview {
+            flex: 1;
+            border-left: 1px solid #d0d2d4;
+            padding: 20px;
+            overflow-y: auto;
+            background: #fefefe;
+        }
+        .editor-status {
+            background: #f8f9fa;
+            border-top: 1px solid #d0d2d4;
+            padding: 8px 15px;
+            font-size: 11px;
+            color: #666;
+            display: flex;
+            justify-content: space-between;
+        }
+        .search-panel {
+            background: white;
+            border: 1px solid #d0d2d4;
+            border-radius: 4px;
+            margin: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-header {
+            background: #f8f9fa;
+            padding: 10px 15px;
+            border-bottom: 1px solid #d0d2d4;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .search-input {
+            width: 100%;
+            border: none;
+            padding: 8px 15px;
+            font-size: 12px;
+            outline: none;
+        }
+        .search-results {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .search-result {
+            padding: 8px 15px;
+            border-bottom: 1px solid #f0f1f2;
+            cursor: pointer;
+            font-size: 11px;
+        }
+        .search-result:hover {
+            background: #f8f9fa;
+        }
+        .search-result:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Repository Hub</h1>
+        <p style="margin: 5px 0 0 0; opacity: 0.9;">Forum view • Collaborative project discussions</p>
+    </div>
+    
+    <div class="nav">
+        <a href="#" onclick="showSection('game-projects')">Game Projects</a>
+        <a href="#" onclick="showSection('notebooks')">All Notebooks</a>
+        <a href="#" onclick="showSection('recent')">Recent Files</a>
+        <a href="http://localhost:3002" target="_blank" style="background: #2c5aa0; color: white; padding: 6px 12px; border-radius: 3px; margin-left: 20px; text-decoration: none;">📂 File Browser</a>
+        <a href="http://localhost:8090" target="_blank" style="background: #2c5aa0; color: white; padding: 6px 12px; border-radius: 3px; margin-left: 8px; text-decoration: none;">🌐 3D View</a>
+    </div>
+
+    <div class="container">
+        <div id="game-projects" class="forum-section">
+            <div class="forum-title">Game Development Projects</div>
+            <div class="forum-content">
+                <div class="topic" onclick="loadProjectFiles('game-projects/Noxii')">
+                    <div class="topic-title">Project Noxii</div>
+                    <div class="topic-meta">Game development documents and design notes</div>
+                </div>
+                <div class="topic" onclick="loadProjectFiles('on-command-wiki-pages')">
+                    <div class="topic-title">On Command</div>
+                    <div class="topic-meta">Technical development and game design</div>
+                </div>
+                <div class="topic" onclick="loadProjectFiles('dodec-wiki-pages')">
+                    <div class="topic-title">Project Dodec</div>
+                    <div class="topic-meta">Story, characters, and world building</div>
+                </div>
+                <div class="topic" onclick="loadProjectFiles('autumn-wiki-pages')">
+                    <div class="topic-title">Project Autumn</div>
+                    <div class="topic-meta">Game design document and mechanics</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="notebooks-list" class="forum-section">
+            <div class="forum-title">Repository Notebooks</div>
+            <div class="forum-content">
+                <div class="loading">Loading notebooks...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="file-viewer" class="file-viewer">
+        <div class="file-content">
+            <span class="close-btn" onclick="closeFile()">&times;</span>
+            <div id="file-content-text"></div>
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #d0d2d4; font-size: 11px; color: #666;">
+                <button onclick="openEditor(currentFilePath)" style="background: #2c5aa0; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; margin-right: 10px;">✏️ Edit</button>
+                <a href="http://localhost:3002" target="_blank" style="color: #2c5aa0; text-decoration: none;">📂 File Browser</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Integrated Editor -->
+    <div id="editor-container" class="editor-container">
+        <div class="editor-window">
+            <div class="editor-header">
+                <h3 id="editor-title" style="margin: 0; font-size: 16px;">Edit File</h3>
+                <div>
+                    <button onclick="saveFile()" style="background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 3px; cursor: pointer; margin-right: 8px;">💾 Save</button>
+                    <span class="close-btn" onclick="closeEditor()" style="cursor: pointer; font-size: 20px;">&times;</span>
+                </div>
+            </div>
+            
+            <div class="editor-toolbar">
+                <button onclick="insertText('**', '**')">Bold</button>
+                <button onclick="insertText('*', '*')">Italic</button>
+                <button onclick="insertText('`', '`')">Code</button>
+                <div class="separator"></div>
+                <button onclick="insertText('# ', '')">H1</button>
+                <button onclick="insertText('## ', '')">H2</button>
+                <button onclick="insertText('### ', '')">H3</button>
+                <div class="separator"></div>
+                <button onclick="insertText('- ', '')">List</button>
+                <button onclick="insertText('1. ', '')">Numbers</button>
+                <button onclick="insertText('> ', '')">Quote</button>
+                <div class="separator"></div>
+                <button onclick="insertText('[', '](url)')">Link</button>
+                <button onclick="insertText('[[', ']]')">Wiki Link</button>
+                <div class="separator"></div>
+                <button onclick="togglePreview()" id="preview-btn">👁️ Preview</button>
+                <button onclick="searchInContent()">🔍 Search</button>
+            </div>
+            
+            <div class="editor-body">
+                <div class="editor-sidebar">
+                    <div class="search-panel">
+                        <div class="search-header">Search Content</div>
+                        <input type="text" class="search-input" id="content-search" placeholder="Search in file..." onkeyup="performContentSearch()">
+                        <div class="search-results" id="search-results"></div>
+                    </div>
+                    
+                    <div class="search-panel">
+                        <div class="search-header">Related Files</div>
+                        <div id="related-files" style="padding: 10px; font-size: 11px; color: #666;">Loading...</div>
+                    </div>
+                </div>
+                
+                <div class="editor-main">
+                    <textarea id="file-editor" class="editor-input" placeholder="Start typing..."></textarea>
+                    <div id="editor-preview" class="editor-preview" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <div class="editor-status">
+                <span id="editor-stats">Lines: 0 | Characters: 0</span>
+                <span id="editor-saved" style="color: #28a745; display: none;">✓ Saved</span>
+            </div>
+        </div>
+    </div>
+    
+    <footer style="background: #e6e8ea; border-top: 1px solid #d0d2d4; padding: 15px; text-align: center; margin-top: 20px; font-size: 11px; color: #666;">
+        <strong>Repository Hub</strong> • 
+        <a href="http://localhost:3002" target="_blank" style="color: #2c5aa0; text-decoration: none;">File Browser</a> • 
+        <a href="http://localhost:8030" style="color: #1e4080; text-decoration: none; font-weight: bold;">Forum View</a> • 
+        <a href="http://localhost:8090" target="_blank" style="color: #2c5aa0; text-decoration: none;">3D View</a>
+    </footer>
+
+    <script>
+        async function loadNotebooks() {
+            try {
+                const response = await fetch('/api/notebooks');
+                const files = await response.json();
+                
+                const container = document.querySelector('#notebooks-list .forum-content');
+                container.innerHTML = '';
+                
+                files.sort((a, b) => new Date(b.modified) - new Date(a.modified));
+                
+                files.forEach(file => {
+                    const topic = document.createElement('div');
+                    topic.className = 'topic';
+                    topic.onclick = () => loadFile(file.path);
+                    
+                    topic.innerHTML = `
+                        <div class="topic-title">${file.name}</div>
+                        <div class="topic-meta">${file.path} • ${new Date(file.modified).toLocaleDateString()} • 
+                            <a href="http://localhost:3002" target="_blank" style="color: #2c5aa0; text-decoration: none; font-size: 10px;">📂 Edit</a>
+                        </div>
+                        <div class="topic-preview">${file.preview}</div>
+                    `;
+                    
+                    container.appendChild(topic);
+                });
+                
+            } catch (err) {
+                console.error('Failed to load notebooks:', err);
+            }
+        }
+
+        async function loadFile(filePath) {
+            try {
+                const response = await fetch(`/api/file/${filePath}`);
+                const data = await response.json();
+                
+                // Store the current file path for editing
+                currentFilePath = filePath;
+                
+                document.getElementById('file-content-text').innerHTML = 
+                    `<h2>${filePath}</h2><pre>${data.content}</pre>`;
+                document.getElementById('file-viewer').style.display = 'block';
+                
+            } catch (err) {
+                console.error('Failed to load file:', err);
+                alert('Failed to load file: ' + err.message);
+            }
+        }
+
+        let currentFilePath = '';
+        let previewMode = false;
+        
+        function closeFile() {
+            document.getElementById('file-viewer').style.display = 'none';
+        }
+        
+        function openEditor(filePath) {
+            currentFilePath = filePath;
+            document.getElementById('editor-title').textContent = `Edit: ${filePath}`;
+            document.getElementById('editor-container').style.display = 'block';
+            document.getElementById('file-viewer').style.display = 'none';
+            
+            // Load file content
+            loadFileForEditing(filePath);
+        }
+        
+        function closeEditor() {
+            document.getElementById('editor-container').style.display = 'none';
+            currentFilePath = '';
+        }
+        
+        async function loadFileForEditing(filePath) {
+            try {
+                const response = await fetch(`/api/file/${filePath}`);
+                const data = await response.json();
+                
+                document.getElementById('file-editor').value = data.content;
+                updateEditorStats();
+                loadRelatedFiles(filePath);
+                
+            } catch (err) {
+                alert('Failed to load file for editing');
+            }
+        }
+        
+        async function saveFile() {
+            if (!currentFilePath) return;
+            
+            const content = document.getElementById('file-editor').value;
+            
+            try {
+                const response = await fetch(`/api/file/${currentFilePath}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content })
+                });
+                
+                if (response.ok) {
+                    const savedIndicator = document.getElementById('editor-saved');
+                    savedIndicator.style.display = 'inline';
+                    setTimeout(() => {
+                        savedIndicator.style.display = 'none';
+                    }, 2000);
+                } else {
+                    alert('Failed to save file');
+                }
+                
+            } catch (err) {
+                alert('Failed to save file');
+            }
+        }
+        
+        function insertText(before, after) {
+            const editor = document.getElementById('file-editor');
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const selectedText = editor.value.substring(start, end);
+            
+            const newText = before + selectedText + after;
+            editor.value = editor.value.substring(0, start) + newText + editor.value.substring(end);
+            
+            const newCursorPos = start + before.length + selectedText.length;
+            editor.setSelectionRange(newCursorPos, newCursorPos);
+            editor.focus();
+            updateEditorStats();
+        }
+        
+        function togglePreview() {
+            const editor = document.getElementById('file-editor');
+            const preview = document.getElementById('editor-preview');
+            const btn = document.getElementById('preview-btn');
+            
+            previewMode = !previewMode;
+            
+            if (previewMode) {
+                editor.style.display = 'none';
+                preview.style.display = 'block';
+                preview.innerHTML = `<pre>${editor.value}</pre>`;
+                btn.textContent = '✏️ Edit';
+            } else {
+                editor.style.display = 'block';
+                preview.style.display = 'none';
+                btn.textContent = '👁️ Preview';
+            }
+        }
+        
+        function updateEditorStats() {
+            const editor = document.getElementById('file-editor');
+            const content = editor.value;
+            const lines = content.split('\n').length;
+            const chars = content.length;
+            
+            document.getElementById('editor-stats').textContent = `Lines: ${lines} | Characters: ${chars}`;
+        }
+        
+        function performContentSearch() {
+            const query = document.getElementById('content-search').value.toLowerCase();
+            const content = document.getElementById('file-editor').value;
+            const results = document.getElementById('search-results');
+            
+            if (!query) {
+                results.innerHTML = '';
+                return;
+            }
+            
+            const lines = content.split('\n');
+            const matches = [];
+            
+            lines.forEach((line, index) => {
+                if (line.toLowerCase().includes(query)) {
+                    matches.push({ line: index + 1, content: line });
+                }
+            });
+            
+            results.innerHTML = matches.map(match => 
+                `<div class="search-result" onclick="goToLine(${match.line})">
+                    <strong>Line ${match.line}:</strong> ${match.content.substring(0, 50)}...
+                </div>`
+            ).join('');
+        }
+        
+        function goToLine(lineNumber) {
+            const editor = document.getElementById('file-editor');
+            const lines = editor.value.split('\n');
+            let position = 0;
+            
+            for (let i = 0; i < lineNumber - 1; i++) {
+                position += lines[i].length + 1;
+            }
+            
+            editor.focus();
+            editor.setSelectionRange(position, position + lines[lineNumber - 1].length);
+        }
+        
+        async function loadRelatedFiles(filePath) {
+            try {
+                const response = await fetch('/api/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: filePath.split('/').pop().replace(/\.[^/.]+$/, '') })
+                });
+                
+                const results = await response.json();
+                const relatedContainer = document.getElementById('related-files');
+                
+                if (results.length > 0) {
+                    relatedContainer.innerHTML = results.slice(0, 5).map(result => 
+                        `<div style="margin-bottom: 8px; cursor: pointer; color: #2c5aa0;" onclick="loadFile('${result.path}')">
+                            📄 ${result.name}
+                        </div>`
+                    ).join('');
+                } else {
+                    relatedContainer.innerHTML = 'No related files found';
+                }
+                
+            } catch (err) {
+                document.getElementById('related-files').innerHTML = 'Failed to load related files';
+            }
+        }
+        
+        // Auto-save functionality
+        setInterval(() => {
+            if (currentFilePath && document.getElementById('file-editor').value) {
+                saveFile();
+            }
+        }, 30000); // Auto-save every 30 seconds
+        
+        // Update stats as user types
+        document.addEventListener('DOMContentLoaded', function() {
+            const editor = document.getElementById('file-editor');
+            if (editor) {
+                editor.addEventListener('input', updateEditorStats);
+            }
+        });
+
+        async function loadProjectFiles(projectPath) {
+            try {
+                const response = await fetch('/api/notebooks');
+                const files = await response.json();
+                
+                // Filter files based on project path
+                const projectFiles = files.filter(file => 
+                    file.path.toLowerCase().includes(projectPath.toLowerCase()) ||
+                    file.name.toLowerCase().includes(projectPath.toLowerCase())
+                );
+                
+                const container = document.querySelector('#notebooks-list .forum-content');
+                container.innerHTML = `<h3 style="margin: 10px 0; color: #2c5aa0;">Project: ${projectPath}</h3>`;
+                
+                if (projectFiles.length === 0) {
+                    container.innerHTML += '<div style="padding: 15px; color: #666;">No files found for this project.</div>';
+                    return;
+                }
+                
+                projectFiles.forEach(file => {
+                    const topic = document.createElement('div');
+                    topic.className = 'topic';
+                    topic.onclick = () => loadFile(file.path);
+                    
+                    topic.innerHTML = `
+                        <div class="topic-title">${file.name}</div>
+                        <div class="topic-meta">${file.path} • ${new Date(file.modified).toLocaleDateString()}</div>
+                        <div class="topic-preview">${file.preview}</div>
+                    `;
+                    
+                    container.appendChild(topic);
+                });
+                
+                // Scroll to the section
+                document.getElementById('notebooks-list').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (err) {
+                console.error('Failed to load project files:', err);
+            }
+        }
+
+        async function showSection(section) {
+            const container = document.querySelector('#notebooks-list .forum-content');
+            
+            try {
+                const response = await fetch('/api/notebooks');
+                const files = await response.json();
+                
+                let filteredFiles = files;
+                let sectionTitle = 'All Notebooks';
+                
+                if (section === 'recent') {
+                    // Show files modified in last 30 days
+                    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+                    filteredFiles = files.filter(file => new Date(file.modified) > thirtyDaysAgo);
+                    sectionTitle = 'Recent Files (Last 30 Days)';
+                } else if (section === 'game-projects') {
+                    // Show game-related files
+                    const gameKeywords = ['game', 'project', 'noxii', 'dodec', 'autumn', 'command', 'gdd', 'design'];
+                    filteredFiles = files.filter(file => 
+                        gameKeywords.some(keyword => 
+                            file.path.toLowerCase().includes(keyword) || 
+                            file.name.toLowerCase().includes(keyword)
+                        )
+                    );
+                    sectionTitle = 'Game Development Files';
+                } else if (section === 'notebooks') {
+                    sectionTitle = 'All Notebooks';
+                }
+                
+                container.innerHTML = `<h3 style="margin: 10px 0; color: #2c5aa0;">${sectionTitle}</h3>`;
+                
+                if (filteredFiles.length === 0) {
+                    container.innerHTML += '<div style="padding: 15px; color: #666;">No files found for this section.</div>';
+                    return;
+                }
+                
+                // Sort by modification date (newest first)
+                filteredFiles.sort((a, b) => new Date(b.modified) - new Date(a.modified));
+                
+                filteredFiles.forEach(file => {
+                    const topic = document.createElement('div');
+                    topic.className = 'topic';
+                    topic.onclick = () => loadFile(file.path);
+                    
+                    topic.innerHTML = `
+                        <div class="topic-title">${file.name}</div>
+                        <div class="topic-meta">${file.path} • ${new Date(file.modified).toLocaleDateString()}</div>
+                        <div class="topic-preview">${file.preview}</div>
+                    `;
+                    
+                    container.appendChild(topic);
+                });
+                
+                // Scroll to the section
+                document.getElementById('notebooks-list').scrollIntoView({ behavior: 'smooth' });
+                
+            } catch (err) {
+                console.error('Failed to load section:', err);
+                container.innerHTML = '<div style="padding: 15px; color: #d32f2f;">Failed to load files. Please try again.</div>';
+            }
+        }
+
+        // Load notebooks on page load
+        window.onload = loadNotebooks;
+    </script>
+</body>
+</html>
